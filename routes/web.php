@@ -9,7 +9,6 @@ use App\Http\Controllers\UserController;
 //     return view('welcome');
 // });
 
-
 Route::get('/', [AuthController::class, 'login'])->name('login');
 Route::get('/login', [AuthController::class, 'login'])->name('login');
 Route::post('/login', [AuthController::class, 'login_process'])->name('login.process');
