@@ -21,11 +21,11 @@
         </label>
     @endif
 
-    <div x-data="{ isOptionSelected: '{{ old($name, $selected) }}' !== '' }" class="relative z-20">
+    <div x-data="{ isOptionSelected: '{{ $selected }}' !== '' }" class="relative z-20">
         <select name="{{ $name }}" id="{{ $name }}" {{ $attributes->merge(['class' => $selectClass]) }} :class="isOptionSelected && 'text-gray-800 dark:text-white/90'" @change="isOptionSelected = $event.target.value !== ''">
             <option value="">{{ $placeholder }}</option>
             @foreach ($options as $key => $value)
-                <option value="{{ $key }}" @selected(old($name, $selected) == $key) class="text-gray-700 dark:bg-gray-900 dark:text-gray-400">{{ $value }}</option>
+                <option value="{{ $key }}" @selected($selected == $key) class="text-gray-700 dark:bg-gray-900 dark:text-gray-400">{{ $value }}</option>
             @endforeach
         </select>
 

@@ -7,6 +7,12 @@ use App\Models\User;
 
 class ProfileController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('can:profiles index')->only('index');
+        $this->middleware('can:profiles edit')->only(['edit', 'update']);
+    }
+
     public function index()
     {
         return view('dashboard.pages.profiles.index');

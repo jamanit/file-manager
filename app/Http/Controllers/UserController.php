@@ -5,10 +5,18 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 use App\Models\User;
-use App\Models\Role;
+use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('can:users index')->only('index');
+        $this->middleware('can:users create')->only(['create', 'store']);
+        $this->middleware('can:users edit')->only(['edit', 'update']);
+        $this->middleware('can:users delete')->only('destroy');
+    }
+
     public function index(Request $request)
     {
         if ($request->ajax()) {
@@ -16,16 +24,17 @@ class UserController extends Controller
 
             return DataTables::of($data)
                 ->addIndexColumn()
-                ->addColumn('role_name', function ($row) {
-                    return $row->role->name ?? '-';
+                ->addColumn('roles', function ($row) {
+                    return $row->getRoleNames()->implode(', ');
                 })
                 ->addColumn('actions', function ($row) {
-                    $editUrl = route('users.edit', $row->uuid);
-                    $deleteUrl = route('users.destroy', $row->uuid);
+                    $editUrl        = route('users.edit', $row->uuid);
+                    $deleteUrl      = route('users.destroy', $row->uuid);
+                    $permissionBase = 'users';
 
-                    return view('components.table.actions', compact('editUrl', 'deleteUrl'))->render();
+                    return view('components.table.actions', compact('editUrl', 'deleteUrl', 'permissionBase'))->render();
                 })
-                ->rawColumns(['actions'])
+                ->rawColumns(['roles', 'actions'])
                 ->make(true);
         }
 
@@ -34,7 +43,10 @@ class UserController extends Controller
 
     public function create()
     {
-        $roleOptions = Role::orderBy('name', 'asc')->pluck('name', 'id')->toArray();
+        $roleOptions = collect(Role::pluck('name', 'name')->toArray())
+            ->map(fn($text, $value) => ['value' => $value, 'text' => $text])
+            ->values()
+            ->toArray();
 
         return view('dashboard.pages.users.create', compact('roleOptions'));
     }
@@ -45,15 +57,19 @@ class UserController extends Controller
             'name'     => 'required|string|max:255',
             'email'    => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
-            'role_id'  => 'required|exists:roles,id',
+            'roles'    => 'required|array',
+            'roles.*'  => 'exists:roles,name',
         ]);
 
-        User::create([
+        $user = User::create([
             'name'     => $request->name,
             'email'    => $request->email,
             'password' => bcrypt($request->password),
-            'role_id'  => $request->role_id,
         ]);
+
+        if ($request->filled('roles')) {
+            $user->assignRole($request->roles);
+        }
 
         return redirect()->route('users.index')->with('success', 'Data created successfully.');
     }
@@ -65,11 +81,18 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
-        $roleOptions = Role::orderBy('name', 'asc')->pluck('name', 'id')->toArray();
         if (!$user) {
             return redirect()->route('users.index')->with('error', 'Data not found.');
         }
-        return view('dashboard.pages.users.edit', compact('user', 'roleOptions'));
+
+        $roleOptions = collect(Role::pluck('name', 'name')->toArray())
+            ->map(fn($text, $value) => ['value' => $value, 'text' => $text])
+            ->values()
+            ->toArray();
+
+        $selectedRoles = $user->roles->pluck('name')->toArray();
+
+        return view('dashboard.pages.users.edit', compact('user', 'roleOptions', 'selectedRoles'));
     }
 
     public function update(Request $request, User $user)
@@ -78,18 +101,24 @@ class UserController extends Controller
             'name'     => 'required|string|max:255',
             'email'    => 'required|string|email|max:255|unique:users,email,' . $user->id,
             'password' => 'nullable|string|min:8|confirmed',
-            'role_id'  => 'required|exists:roles,id',
+            'roles'    => 'nullable|array',
+            'roles.*'  => 'exists:roles,name',
         ]);
 
-        $user->name = $request->name;
+        $user->name  = $request->name;
         $user->email = $request->email;
-        $user->role_id = $request->role_id;
 
         if ($request->filled('password')) {
             $user->password = bcrypt($request->password);
         }
 
         $user->save();
+
+        if ($request->filled('roles')) {
+            $user->syncRoles($request->roles);
+        } else {
+            $user->syncRoles([]);
+        }
 
         return redirect()->route('users.index')->with('success', 'Data updated successfully.');
     }

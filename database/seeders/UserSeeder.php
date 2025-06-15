@@ -19,19 +19,22 @@ class UserSeeder extends Seeder
             [
                 'name'  => 'Superadmin',
                 'email' => 'superadmin@email.com',
+                'role'  => 'super admin'
             ],
             [
                 'name'  => 'Admin',
                 'email' => 'admin@email.com',
+                'role'  => 'admin'
             ],
             [
                 'name'  => 'User',
                 'email' => 'user@email.com',
+                'role'  => 'user'
             ],
         ];
 
         foreach ($data as $item) {
-            User::updateOrCreate(
+            $user = User::updateOrCreate(
                 ['email' => $item['email']],
                 [
                     'name'     => $item['name'],
@@ -39,6 +42,7 @@ class UserSeeder extends Seeder
                     'password' => bcrypt('password'),
                 ]
             );
+            $user->assignRole($item['role']);
         }
     }
 }

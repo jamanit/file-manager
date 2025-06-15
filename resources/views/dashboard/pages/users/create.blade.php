@@ -15,7 +15,7 @@
                             <x-form.input type="email" name="email" label="Email" placeholder="Enter email" value="{{ old('email') }}" />
                             <x-form.input type="password" name="password" label="Password" placeholder="Enter password" />
                             <x-form.input type="password" name="password_confirmation" label="Password Confirmation" placeholder="Enter password confirmation" />
-                            <x-form.select name="role_id" label="Role" :options="$roleOptions" selected="old('role_id')" />
+                            <x-form.select2-multiple name="roles" label="Roles" :options="$roleOptions" :selected="old('roles', [])" />
                         </div>
 
                         <div class="mt-4">
