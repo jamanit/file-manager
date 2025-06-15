@@ -49,6 +49,11 @@ class User extends Authenticatable
         ];
     }
 
+    public function getRouteKeyName()
+    {
+        return 'uuid';
+    }
+
     public $incrementing = true;
 
     public function uniqueIds(): array
