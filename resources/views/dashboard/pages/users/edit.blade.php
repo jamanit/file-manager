@@ -16,11 +16,11 @@
                             <x-form.input type="email" name="email" label="Email" placeholder="Enter email" value="{{ old('email', $user->email) }}" />
                             <x-form.input type="password" name="password" label="Password" placeholder="Enter password" />
                             <x-form.input type="password" name="password_confirmation" label="Password Confirmation" placeholder="Enter password confirmation" />
-                            <x-form.select2-multiple name="roles" label="Roles" :options="$roleOptions" :selected="old('roles', $selectedRoles)" />
+                            <x-form.select2 name="roles" label="Roles" :options="$roleOptions" :selected="old('roles', $selectedRoles)" :multiple="true" />
                         </div>
 
                         <div class="mt-4">
-                            <x-form.button label="Save" />
+                            <x-form.button label="Save Changes" />
                         </div>
                     </form>
                 </div>

@@ -43,10 +43,7 @@ class UserController extends Controller
 
     public function create()
     {
-        $roleOptions = collect(Role::pluck('name', 'name')->toArray())
-            ->map(fn($text, $value) => ['value' => $value, 'text' => $text])
-            ->values()
-            ->toArray();
+        $roleOptions = Role::pluck('name', 'name')->toArray();
 
         return view('dashboard.pages.users.create', compact('roleOptions'));
     }
@@ -57,7 +54,7 @@ class UserController extends Controller
             'name'     => 'required|string|max:255',
             'email'    => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
-            'roles'    => 'required|array',
+            'roles'    => 'nullable|array',
             'roles.*'  => 'exists:roles,name',
         ]);
 
@@ -85,11 +82,7 @@ class UserController extends Controller
             return redirect()->route('users.index')->with('error', 'Data not found.');
         }
 
-        $roleOptions = collect(Role::pluck('name', 'name')->toArray())
-            ->map(fn($text, $value) => ['value' => $value, 'text' => $text])
-            ->values()
-            ->toArray();
-
+        $roleOptions = Role::pluck('name', 'name')->toArray();
         $selectedRoles = $user->roles->pluck('name')->toArray();
 
         return view('dashboard.pages.users.edit', compact('user', 'roleOptions', 'selectedRoles'));
